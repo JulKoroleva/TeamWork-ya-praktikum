@@ -3,10 +3,19 @@ import './Canvas.scss'
 import { ICircle, STATUS } from './interfaces'
 import { useMousePosition } from '../../utils/useMousePosition'
 
+const FPS = 10
+const SPEED_COEFFICIENT = 4
+const MIN_SPEED = 1
+
+const INITIAL_STATE = {
+  x: 0,
+  y: 0,
+  radius: 10,
+  strokeStyle: 'black',
+  colorFill: 'black',
+  status: STATUS.ALIVE,
+}
 // @TODO база
-// - надо чтобы кружок бежал за мышкой => нужен вектор
-// - чем дальше мышка за фрейм тем больше скорость
-// - чем жирнее круг - тем меньше скорость
 // - сделать круг картинкой, чтобы не так скучно было жить...
 
 // @TODO средне
@@ -17,15 +26,9 @@ import { useMousePosition } from '../../utils/useMousePosition'
 // поиграть ещё понять остальные детали =)
 export function CanvasComponent() {
   const ref = useRef(null)
-  const coodrs = useRef<ICircle>({
-    x: 0,
-    y: 0,
-    radius: 10,
-    strokeStyle: 'black',
-    colorFill: 'black',
-    status: STATUS.ALIVE,
-  })
-  useMousePosition(coodrs)
+  const currentCoodrs = useRef<ICircle>(INITIAL_STATE)
+  const mouseCoodrs = useRef<ICircle>(INITIAL_STATE)
+  useMousePosition(mouseCoodrs)
   const FOOD = useRef<Array<ICircle>>([])
   // значения НЕ экран. значения - полотно !
   FOOD.current = generateFood({ width: 1000, height: 1000 })
@@ -50,8 +53,8 @@ export function CanvasComponent() {
   function collisionDetection() {
     for (const element of FOOD.current) {
       if (element.status === STATUS.ALIVE) {
-        if (isCollided(element, { ...coodrs.current })) {
-          coodrs.current.radius = coodrs.current.radius + element.radius
+        if (isCollided(element, { ...currentCoodrs.current })) {
+          currentCoodrs.current.radius = currentCoodrs.current.radius + element.radius
           element.status = STATUS.DEAD
         }
       }
@@ -61,16 +64,37 @@ export function CanvasComponent() {
   // временно. По факту там по-другому как-то
   function collisionEnemyDetection() {
     for (const element of ENEMY.current) {
-      if (isCollided(element, { ...coodrs.current })) {
-        const d = coodrs.current.radius - element.radius
+      if (isCollided(element, { ...currentCoodrs.current })) {
+        const d = currentCoodrs.current.radius - element.radius
         if (d <= 0) {
           // Тут какой-то gameover
           return
         }
-        coodrs.current.radius = coodrs.current.radius - element.radius
+        currentCoodrs.current.radius = currentCoodrs.current.radius - element.radius
         element.status = STATUS.DEAD
       }
     }
+  }
+
+  /** над формулами можно ещё поработать =) черновой вариант */
+  function moveActor() {
+    //@ts-ignore
+    const ctx = ref.current!.getContext('2d')
+
+    const { x: mouseX, y: mouseY } = mouseCoodrs.current
+    const { x, y, radius } = currentCoodrs.current
+    const speed = Math.max((100 / FPS) * SPEED_COEFFICIENT + radius / 2, MIN_SPEED)
+
+    currentCoodrs.current = {
+      ...currentCoodrs.current,
+      x: x + (mouseX - x) / speed,
+      y: y + (mouseY - y) / speed,
+    }
+
+    drawCircle(ctx, {
+      ...currentCoodrs.current,
+      lineWidth: 2,
+    })
   }
 
   const animate = () => {
@@ -82,10 +106,7 @@ export function CanvasComponent() {
 
       collisionDetection()
       collisionEnemyDetection()
-      drawCircle(ctx, {
-        ...coodrs.current,
-        lineWidth: 2,
-      })
+      moveActor()
 
       for (const element of FOOD.current) {
         if (element.status === STATUS.ALIVE) {
@@ -109,7 +130,7 @@ export function CanvasComponent() {
 
   useEffect(() => {
     /** 100 мс оставлено специально для удобного дебага */
-    const id = setInterval(animate, 100)
+    const id = setInterval(animate, FPS)
     return () => clearInterval(id)
   }, [])
 
