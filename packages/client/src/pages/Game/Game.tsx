@@ -1,5 +1,10 @@
 import React from 'react';
+import { CanvasComponent } from '../../components/canvasComponent/Canvas.component';
 
 export const Game = () => {
-  return <div>Game page</div>;
+  return (
+    <div>
+      <CanvasComponent />
+    </div>
+  );
 };
