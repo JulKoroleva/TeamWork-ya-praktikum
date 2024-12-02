@@ -1,3 +1,6 @@
+echo "Запуск линтинга стилей изменённых файлов..."
+yarn lint:styles
+
 echo "Запуск линтинга изменённых файлов с lint-staged..."
 yarn lint-staged
 
