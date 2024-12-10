@@ -32,6 +32,7 @@ export const Authorization = () => {
   const authorizationError = useSelector(selectAuthorizationError);
 
   const onSubmit = (data: IAuthorizationFormSubmit) => {
+    //@ts-expect-error
     dispatch(authorizationRequest(data));
   };
 

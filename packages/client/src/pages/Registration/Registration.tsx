@@ -33,6 +33,7 @@ export const Registration = () => {
   const registrationError = useSelector(selectRegistrationError);
 
   const onSubmit = (data: IRegistrationFormSubmit & { password_repeat: string }) => {
+    //@ts-expect-error
     dispatch(registrationRequest(data));
   };
 

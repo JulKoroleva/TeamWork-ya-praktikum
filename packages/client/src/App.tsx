@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import {
   Authorization,
   Forum,
@@ -9,11 +10,12 @@ import {
   Registration,
   Error,
   Game,
+  Topic,
 } from '@/pages';
 import { ROUTES } from '@/constants/routes';
-import { Topic } from './pages/Topic';
+import { store } from './redux/store/store';
 
-const routes = [
+export const routes = [
   { path: ROUTES.authorization(), element: <Authorization /> },
   { path: ROUTES.registration(), element: <Registration /> },
   { path: ROUTES.main(), element: <Main /> },
@@ -47,13 +49,15 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {routes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
-      </Routes>
-    </BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <Routes>
+          {routes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+        </Routes>
+      </BrowserRouter>
+    </Provider>
   );
 }
 

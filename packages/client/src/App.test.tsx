@@ -1,7 +1,9 @@
 import App from './App';
+import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-
-const appContent = 'DOMinators';
+import userEvent from '@testing-library/user-event';
+import { store } from './redux/store/store';
+import { ROUTES } from '@/constants/routes';
 
 // @ts-expect-error
 global.fetch = jest.fn(() =>
@@ -9,7 +11,57 @@ global.fetch = jest.fn(() =>
     json: () => Promise.resolve('hey'),
   }),
 );
-test('Example test', async () => {
-  render(<App />);
-  expect(screen.getByText(appContent)).toBeDefined();
+
+describe('Full app rendering/routing', () => {
+  const user = userEvent.setup();
+
+  beforeEach(() => {
+    window.history.pushState({}, '', ROUTES.home());
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>,
+    );
+  });
+
+  test('render', () => {
+    expect(screen.getByText('DOMinators')).toBeDefined();
+  });
+
+  test('authorization page', async () => {
+    await user.click(screen.getByText(/Log in/i));
+
+    expect(screen.getByText('Authorization')).toBeDefined();
+  });
+
+  test('registration page', async () => {
+    await user.click(screen.getByText(/Log in/i));
+    await user.click(screen.getByText(/Create account/i));
+
+    expect(screen.getByText('Create account')).toBeDefined();
+  });
+
+  test('profile page', async () => {
+    await user.click(screen.getByText(/Profile/i));
+
+    expect(screen.getByText('Profile')).toBeDefined();
+  });
+
+  test('leaderboard page', async () => {
+    await user.click(screen.getByText(/Leaderboard/i));
+
+    expect(screen.getByText('Leader Board')).toBeDefined();
+  });
+
+  test('forum page', async () => {
+    await user.click(screen.getByText(/Forum/i));
+
+    expect(screen.getByText('Game Forum')).toBeDefined();
+  });
+
+  test('game page', async () => {
+    await user.click(screen.getByText(/Start Game!/i));
+
+    expect(screen.getByText('Добро пожаловать в игру', { exact: false })).toBeDefined();
+  });
 });
