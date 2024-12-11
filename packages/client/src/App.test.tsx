@@ -31,6 +31,7 @@ describe('Full app rendering/routing', () => {
   test('authorization page', async () => {
     await user.click(screen.getByText(/Log in/i));
 
+    expect(window.location.pathname).toBe(ROUTES.authorization());
     expect(screen.getByText('Authorization')).toBeDefined();
   });
 
@@ -38,30 +39,35 @@ describe('Full app rendering/routing', () => {
     await user.click(screen.getByText(/Log in/i));
     await user.click(screen.getByText(/Create account/i));
 
+    expect(window.location.pathname).toBe(ROUTES.registration());
     expect(screen.getByText('Create account')).toBeDefined();
   });
 
   test('profile page', async () => {
     await user.click(screen.getByText(/Profile/i));
 
+    expect(window.location.pathname).toBe(ROUTES.profile());
     expect(screen.getByText('Profile')).toBeDefined();
   });
 
   test('leaderboard page', async () => {
     await user.click(screen.getByText(/Leaderboard/i));
 
+    expect(window.location.pathname).toBe(ROUTES.leaderboard());
     expect(screen.getByText('Leader Board')).toBeDefined();
   });
 
   test('forum page', async () => {
     await user.click(screen.getByText(/Forum/i));
 
+    expect(window.location.pathname).toBe(ROUTES.forum());
     expect(screen.getByText('Game Forum')).toBeDefined();
   });
 
   test('game page', async () => {
     await user.click(screen.getByText(/Start Game!/i));
 
+    expect(window.location.pathname).toBe(ROUTES.game());
     expect(screen.getByText('Добро пожаловать в игру', { exact: false })).toBeDefined();
   });
 });

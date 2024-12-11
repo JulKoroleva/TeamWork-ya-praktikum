@@ -19,7 +19,7 @@ import { selectRegistrationStatus, selectRegistrationError } from '@/redux/selec
 import {
   registrationPageFields,
   registrationPageFieldsInitialValues,
-} from './registrationPageData';
+} from './RegistrationPageData';
 import { ROUTES } from '@/constants/routes';
 
 import styles from './registration.module.scss';
