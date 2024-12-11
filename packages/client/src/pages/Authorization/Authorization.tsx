@@ -11,7 +11,6 @@ import {
   TModalStatus,
 } from '@/components';
 
-import { TypeDispatch } from '@/redux/store/store';
 import { authorizationRequest, getUserInfoRequest } from '@/redux/requests';
 import { clearAuthorizationState, IAuthorizationFormSubmit } from '@/redux/slices';
 import { selectAuthorizationError, selectAuthorizationStatus } from '@/redux/selectors';
@@ -25,6 +24,7 @@ import { ROUTES } from '@/constants/routes';
 import { setCustomCookieWithMaxAge } from '@/services/cookiesHandler';
 
 import styles from './Authorization.module.scss';
+import { TypeDispatch } from '@/redux/store';
 
 export const Authorization = () => {
   const navigate = useNavigate();

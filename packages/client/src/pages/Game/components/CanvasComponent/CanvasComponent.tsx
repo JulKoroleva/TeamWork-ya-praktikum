@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, MutableRefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useMousePosition } from '@/utils/useMousePosition';
 import { useCanvasResize } from '@/utils/useCanvasResize';
@@ -6,7 +6,12 @@ import { useCanvasResize } from '@/utils/useCanvasResize';
 import { CanvasController } from './CanvasComponent.controller';
 
 import styles from './CanvasComponent.module.scss';
-import { STATUS } from './CanvasComponent.interface';
+import { STATUS } from './interfaces/CanvasComponent.interface';
+import { Button } from 'react-bootstrap';
+import { ROUTES } from '@/constants/routes';
+import { Navigation } from '@/components';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { TResult } from '../../Game.interface';
 
 export function CanvasComponent({
@@ -14,11 +19,35 @@ export function CanvasComponent({
 }: {
   endGameCallback: (result: Array<TResult>) => void;
 }) {
-  const controllerRef: MutableRefObject<CanvasController | null> = useRef(null);
-  if (controllerRef.current === null) {
-    controllerRef.current = new CanvasController();
-  }
-  const controller = controllerRef.current!;
+  const controllerRef = useRef<CanvasController | null>(null);
+  const baseAvatar = useSelector(
+    (state: RootState) => state.global.user.userInfo?.avatar || 'rgb(0, 0, 0)',
+  );
+
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (baseAvatar?.startsWith('data:image')) {
+      const img = new Image();
+      img.src = baseAvatar;
+      img.onload = () => {
+        setImageElement(img);
+      };
+    } else {
+      if (!controllerRef.current) {
+        controllerRef.current = new CanvasController(baseAvatar || 'rgb(0, 0, 0)', undefined);
+        animate();
+      }
+    }
+  }, [baseAvatar]);
+
+  useEffect(() => {
+    if (!controllerRef.current && (imageElement || (!baseAvatar && !imageElement))) {
+      controllerRef.current = new CanvasController(baseAvatar, imageElement || undefined);
+      animate();
+    }
+  }, [imageElement, baseAvatar]);
+
   const refCanvas = useRef<HTMLCanvasElement>(null);
   const mouseCoodrs = useMousePosition();
   const [score, setScore] = useState(0);
@@ -26,12 +55,19 @@ export function CanvasComponent({
   useCanvasResize();
 
   const renderCanvas = (ctx: CanvasRenderingContext2D) => {
-    const canvas = document.querySelector('canvas')!;
+    const controller = controllerRef.current;
+    if (!controller) return;
+
+    const canvas = refCanvas.current;
+    if (!canvas) return;
 
     controller.Camera.Scale = Math.max(10 - controller.Player.Player.Radius / 10, 1);
 
     ctx.setTransform(controller.Camera.Scale, 0, 0, controller.Camera.Scale, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    controller.DrawGrid(ctx);
+
     controller.MovePlayer(mouseCoodrs.current.X, mouseCoodrs.current.Y);
     controller.MoveStatics();
     controller.EnemyPlayersMove();
@@ -46,25 +82,43 @@ export function CanvasComponent({
   };
 
   const animate = () => {
-    if (!refCanvas.current) {
-      return;
-    }
+    const controller = controllerRef.current;
+    if (!controller || !refCanvas.current) return;
+
     if (controller.Player.Player.Status === STATUS.DEAD) {
       endGameCallback(controller.Result);
       return;
     }
     setScore(controller.Player.MyScore);
 
-    renderCanvas(refCanvas.current!.getContext('2d')!);
+    const ctx = refCanvas.current.getContext('2d');
+    if (!ctx) return;
+    renderCanvas(ctx);
 
     requestAnimationFrame(animate);
   };
 
   useEffect(() => {
-    animate();
+    const canvas = refCanvas.current;
+    if (canvas) {
+      const setCanvasSize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+
+      setCanvasSize();
+      window.addEventListener('resize', setCanvasSize);
+
+      return () => {
+        window.removeEventListener('resize', setCanvasSize);
+      };
+    }
   }, []);
 
   useEffect(() => {
+    const controller = controllerRef.current;
+    if (!controller) return;
+
     for (const enemys of controller.EnemyPlayers) {
       enemys.Init();
     }
@@ -77,6 +131,9 @@ export function CanvasComponent({
   }, []);
 
   useEffect(() => {
+    const controller = controllerRef.current;
+    if (!controller) return;
+
     const cb = (event: KeyboardEvent) => {
       if (event.code === 'Space') {
         controller.Player.cellDivision(
@@ -104,9 +161,18 @@ export function CanvasComponent({
 
   return (
     <div className={styles['canvas-page']}>
-      <div className={styles['canvas-page__score-block']}>
-        <div className={styles['canvas-page__score-block__name']}>Игрок: </div>
-        <div className={styles['canvas-page__score-block__points']}>{score}</div>
+      <div className={styles['canvas-page__menu']}>
+        <div className={styles['canvas-page__score-block']}>
+          <div className={styles['canvas-page__score-block__name']}>Score: </div>
+          <div className={styles['canvas-page__score-block__points']}>{score}</div>
+        </div>
+        <div className={styles['canvas-page__button_container']}>
+          <Navigation title="" to={ROUTES.main()} />
+          <Button
+            className={styles['back-button']}
+            type="button"
+            onClick={() => ROUTES.main()}></Button>
+        </div>
       </div>
       <canvas className={styles['canvas']} ref={refCanvas} />
     </div>
